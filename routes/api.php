@@ -1,6 +1,8 @@
+
 <?php
 
 use App\Http\Controllers\Api\HealthCheckController;
+use App\Http\Controllers\Api\EmployeeCheckInController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,3 +16,5 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::any('/health-check', [HealthCheckController::class, 'index'])->name('health-check');
+Route::post('/api/attendance/check-in/error', [EmployeeCheckInController::class, 'reportCheckInError'])
+    ->middleware('auth:api')->name('attendance.check-in.error');

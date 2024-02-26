@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Services;
@@ -45,6 +46,26 @@ class EmployeeService
         ]);
 
         return 'Check-in successful.';
+    }
+
+    public function reportCheckInError(int $employee_id, string $message): array
+    {
+        if (trim($message) === '') {
+            throw new Exception("A message is required to report the issue.");
+        }
+
+        $employee = Employee::find($employee_id);
+
+        if (!$employee) {
+            throw new NotFoundHttpException("Employee not found.");
+        }
+
+        $supervisor = $employee->supervisor()->first();
+
+        // Log the error message along with the employee and supervisor details
+        Log::error("Check-in error reported by Employee ID: {$employee_id}, Message: {$message}, Supervisor: {$supervisor->name}");
+
+        return ['status' => 200, 'message' => "Your issue has been reported and will be addressed by your supervisor."];
     }
 
     public function handleCheckInError(string $badge_id): array
