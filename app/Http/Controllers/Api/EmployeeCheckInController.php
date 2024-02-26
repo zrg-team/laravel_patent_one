@@ -1,14 +1,14 @@
-
 <?php
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\EmployeeCheckInRequest;
 use App\Http\Requests\EmployeeCheckInErrorRequest;
+use App\Http\Resources\EmployeeCheckInResource;
 use App\Http\Resources\SuccessResource;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\EmployeeService;
-use App\Http\Resources\EmployeeCheckInResource;
 use App\Exceptions\EmployeeCheckInException;
 
 class EmployeeCheckInController extends Controller

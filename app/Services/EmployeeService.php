@@ -1,8 +1,8 @@
-
 <?php
 
 namespace App\Services;
 
+use App\Exceptions\EmployeeCheckInException;
 use App\Models\Employee;
 use App\Models\Schedule;
 use App\Models\AttendanceRecord;
@@ -18,7 +18,8 @@ class EmployeeService
         $employee = Employee::where('badge_id', $badge_id)->first();
 
         if (!$employee) {
-            throw new Exception('Employee identity cannot be verified.');
+            // Using EmployeeCheckInException for consistency with new code
+            throw new EmployeeCheckInException('Employee identity cannot be verified.', 400);
         }
 
         $today = Carbon::today();
@@ -27,7 +28,8 @@ class EmployeeService
                             ->first();
 
         if (!$schedule) {
-            return 'Employee is not scheduled for the current day.';
+            // Using EmployeeCheckInException for consistency with new code
+            throw new EmployeeCheckInException('Employee is not scheduled for the current day.', 403);
         }
 
         $attendanceRecord = AttendanceRecord::where('employee_id', $employee->id)
@@ -35,7 +37,8 @@ class EmployeeService
                                             ->first();
 
         if ($attendanceRecord) {
-            return 'Employee has already checked in.';
+            // Using EmployeeCheckInException for consistency with new code
+            throw new EmployeeCheckInException('Employee has already checked in.', 403);
         }
 
         AttendanceRecord::create([
@@ -45,7 +48,17 @@ class EmployeeService
             'status' => 'present'
         ]);
 
-        return 'Check-in successful.';
+        // Returning array for consistency with new code
+        return [
+            'status' => 200,
+            'message' => 'Check-in successful.',
+            'attendance_record' => [
+                'employee_id' => $employee->id,
+                'check_in_time' => Carbon::now()->toIso8601String(),
+                'date' => $today->toDateString(),
+                'status' => 'present'
+            ]
+        ];
     }
 
     public function reportCheckInError(int $employee_id, string $message): array
@@ -61,6 +74,10 @@ class EmployeeService
         }
 
         $supervisor = $employee->supervisor()->first();
+
+        if (!$supervisor) {
+            throw new NotFoundHttpException("Supervisor not found.");
+        }
 
         // Log the error message along with the employee and supervisor details
         Log::error("Check-in error reported by Employee ID: {$employee_id}, Message: {$message}, Supervisor: {$supervisor->name}");

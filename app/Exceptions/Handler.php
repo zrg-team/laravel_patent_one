@@ -6,6 +6,7 @@ namespace App\Exceptions;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Exceptions\EmployeeCheckInException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -121,6 +122,10 @@ class Handler extends ExceptionHandler
             $currentLocale = $request->headers->get('Accept-Language');
 
             return $this->handleApiException($request, $exception, $currentLocale);
+        }
+
+        if ($exception instanceof EmployeeCheckInException) {
+            return response()->json(['message' => $exception->getMessage()], $exception->getCode());
         }
 
         return parent::render($request, $exception);
