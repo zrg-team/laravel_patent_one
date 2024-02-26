@@ -1,3 +1,4 @@
+
 <?php
 
 namespace App\Exceptions;
@@ -5,7 +6,9 @@ namespace App\Exceptions;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Exceptions\EmployeeCheckInException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -121,7 +124,33 @@ class Handler extends ExceptionHandler
             return $this->handleApiException($request, $exception, $currentLocale);
         }
 
+        if ($exception instanceof EmployeeCheckInException) {
+            return response()->json(['message' => $exception->getMessage()], $exception->getCode());
+        }
+
         return parent::render($request, $exception);
+    }
+
+    /**
+     * Handle check-in related exceptions.
+     *
+     * @param  \Throwable  $exception
+     * @param  string  $badgeId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function handleCheckInException(Throwable $exception, string $badgeId)
+    {
+        Log::error("Check-in error for badge ID {$badgeId}: {$exception->getMessage()}", [
+            'exception' => $exception,
+        ]);
+
+        // Assuming there is a method to find the supervisor's contact by employee badge ID.
+        $supervisorContact = $this->getSupervisorContactByBadgeId($badgeId);
+
+        return response()->json([
+            'message' => 'An error occurred during check-in. Please contact your supervisor for assistance.',
+            'supervisor_contact' => $supervisorContact,
+        ], 500);
     }
 
     /**
@@ -141,5 +170,18 @@ class Handler extends ExceptionHandler
         ] : [
             'message' => $this->isHttpException($e) ? $e->getMessage() : __('errors.server_error'),
         ];
+    }
+
+    /**
+     * Retrieve supervisor contact information by employee badge ID.
+     *
+     * @param  string  $badgeId
+     * @return array|null
+     */
+    protected function getSupervisorContactByBadgeId(string $badgeId)
+    {
+        // This method should query the database to find the supervisor's contact.
+        // The actual implementation depends on the database structure and is not provided here.
+        return null; // Placeholder return value.
     }
 }
