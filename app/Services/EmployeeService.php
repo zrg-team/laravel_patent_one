@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Services;
@@ -7,6 +6,8 @@ use App\Models\Employee;
 use App\Models\Schedule;
 use App\Models\AttendanceRecord;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Exception;
 
 class EmployeeService
@@ -44,5 +45,34 @@ class EmployeeService
         ]);
 
         return 'Check-in successful.';
+    }
+
+    public function handleCheckInError(string $badge_id): array
+    {
+        try {
+            $employee = Employee::where('badge_id', $badge_id)->first();
+
+            if (!$employee) {
+                throw new NotFoundHttpException("Employee not found.");
+            }
+
+            $supervisor = $employee->supervisor()->first();
+
+            if (!$supervisor) {
+                throw new NotFoundHttpException("Supervisor not found.");
+            }
+
+            // Log the incident for further investigation
+            Log::error("Check-in error for employee ID: {$employee->id}, Badge ID: {$badge_id}");
+
+            // Return supervisor's contact information and instructions
+            return [
+                'supervisor_contact' => $supervisor->name,
+                'message' => 'Please contact your supervisor for assistance.'
+            ];
+        } catch (Exception $e) {
+            Log::error("An error occurred during check-in: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
